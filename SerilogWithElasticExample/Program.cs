@@ -27,27 +27,30 @@ namespace SerilogWithElasticExample
 
         private static void ConfigureSerilog(HostBuilderContext context, LoggerConfiguration configuration)
         {
+            // implement elastic config from appsetting.json
             var serilogSection = context.Configuration.GetSection("Serilog");
             var elasticUrl = serilogSection.GetSection("ElasticUrl").Value;
             var elasticFailureLogPath = serilogSection.GetSection("ElasticFailureLogPath").Value;
             var elasticIndexFormat = serilogSection.GetSection("ElasticIndexFormat").Value;
 
+            // implement serilog config from appsetting.json
             configuration.ReadFrom.Configuration(context.Configuration);
 
-            if (!context.HostingEnvironment.IsDevelopment())
+            // can be changed optionally.
+            // if (!context.HostingEnvironment.IsDevelopment())
+            // {
+            configuration.WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticUrl))
             {
-                configuration.WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticUrl))
-                {
-                    AutoRegisterTemplate = true,
-                    IndexFormat = elasticIndexFormat,
-                    AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
-                    FailureCallback = e => Console.WriteLine("Unable to submit event " + e.MessageTemplate),
-                    EmitEventFailure = EmitEventFailureHandling.WriteToSelfLog |
-                                       EmitEventFailureHandling.WriteToFailureSink |
-                                       EmitEventFailureHandling.RaiseCallback,
-                    FailureSink = new LoggerConfiguration().WriteTo.File(new CompactJsonFormatter(), elasticFailureLogPath, rollingInterval: RollingInterval.Day).CreateLogger(),
-                });
-            }
+                AutoRegisterTemplate = true,
+                IndexFormat = elasticIndexFormat,
+                AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
+                FailureCallback = e => Console.WriteLine("Unable to submit event " + e.MessageTemplate),
+                EmitEventFailure = EmitEventFailureHandling.WriteToSelfLog |
+                                   EmitEventFailureHandling.WriteToFailureSink |
+                                   EmitEventFailureHandling.RaiseCallback,
+                FailureSink = new LoggerConfiguration().WriteTo.File(new CompactJsonFormatter(), elasticFailureLogPath, rollingInterval: RollingInterval.Day).CreateLogger(),
+            });
+            // }
         }
     }
 }
