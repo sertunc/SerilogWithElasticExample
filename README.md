@@ -1,0 +1,2 @@
+# SerilogWithElasticExample
+SerilogWithElasticExample
